@@ -1,0 +1,58 @@
+# FPKM values of representative mitochondrial genes significantly differentially expressed
+library(ggplot2)
+library("reshape2", lib.loc="/share/pkg.7/r/3.6.0/install/lib64/R/library")
+
+#read data from dataset
+df1 <- data.frame(genes$gene_short_name,genes$P0_FPKM,genes$Ad_FPKM)
+markgmit=c('Mpc1','Prdx3','Acat1','Echs1','Slc25a11','Phyh')
+df2 <- df1[which(df1$genes.gene_short_name %in% markgmit),]
+fpkm_matrix$meanp4 <- rowMeans(fpkm_matrix[c('P4_1_FPKM', 'P4_2_FPKM')], na.rm=TRUE)
+fpkm_matrix$meanp7 <- rowMeans(fpkm_matrix[c('P7_1_FPKM', 'P7_2_FPKM')], na.rm=TRUE)
+
+#get average of replicated measurement
+#convert it into suitable format
+NIHMS647083_supplement_2 <- NIHMS647083_supplement_2[which(NIHMS647083_supplement_2$GeneID %in% markgmit),]
+genename=NIHMS647083_supplement_2[,c(1,2)]
+mitname=genename[,1]
+mitname = as.vector(unlist(genename[,1]))
+mp4 <- fpkm_matrix[which(fpkm_matrix$tracking_id %in% mitname),]
+mp4=mp4[,c(1,9,10)]
+mp4$gname=genename$GeneID
+mp4=mp4[,-1]
+mp4=t(mp4)
+colnames(mp4)=mp4[3,]
+mp4=mp4[-3,]
+mode(mp4) <- 'numeric'
+mp41=melt(mp4)
+names(mp41) <- c("FPKM",'Genes',  "value")
+
+df3=t(df2)
+colnames(df3)=df3[1,]
+df3=df3[-1,]
+mode(df3) <- 'numeric'
+
+P0_FPKM=df3[1,]
+Ad_FPKM=df3[2,]
+df3=rbind(P0_FPKM, Ad_FPKM)
+
+df4=melt(df3)
+names(df4) <- c('FPKM',  "Genes",'value')
+
+#combine data from different dataset 
+#order rows by factor() function
+totalmit<-rbind(df4,mp41)
+totalmit$mynew=factor(totalmit$FPKM,labels=c('P0', 'AD', 'P4', 'P7'),ordered = TRUE)
+totalmit$FPKM=factor(totalmit$mynew,ordered = TRUE,levels = c('P0', 'P4', 'P7', 'AD'))
+
+#visualize result by line plot
+p<-ggplot(totalmit, aes(x=FPKM, y=totalmit$value, group=Genes)) +
+       geom_line(aes(color=Genes))+
+       geom_point(aes(color=Genes))+
+       labs(title='Mitochondria')+
+       theme(plot.title = element_text(hjust = 0.5))
+
+p + scale_x_discrete(totalmit$FPKM, labels = c('p0', 'p4', 'p7','adult'))
+p +xlab('Time_Periods')+ylab('FPKM')
+
+
+# FPKM values of representative mitochondrial genes significantly differentially expressed
